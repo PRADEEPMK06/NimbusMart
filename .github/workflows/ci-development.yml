@@ -1,0 +1,90 @@
+# .github/workflows/ci-development.yml
+# ─────────────────────────────────────────────────────────────────────────────
+# CI Validation pipeline for the development branch.
+# Automatically runs on pushes and pull requests targeting the 'development' branch.
+# Purpose:
+#   - Validates that Dockerfiles compile successfully (frontend + backend).
+#   - Validates Terraform formatting, syntax, and runs a dry-run plan for both environments.
+#
+# Required GitHub Secrets:
+#   AWS_ROLE_ARN        — Dev/Shared IAM role for GitHub OIDC
+#   AWS_ROLE_ARN_PROD   — Prod IAM role for GitHub OIDC
+#   AWS_REGION          — e.g. us-west-2
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: CI_Main_Sanity
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - apps/**
+      - terraform/**
+      - helm/**
+  pull_request:
+    branches: [main]
+    paths:
+      - apps/**
+      - terraform/**
+      - helm/**
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+env:
+  TF_VERSION: "1.7.5"
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+
+jobs:
+  docker-test-build:
+    name: Test Docker Builds
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Test Frontend Build
+        working-directory: apps/frontend
+        run: |
+          docker build -t test-frontend:latest .
+
+      - name: Test Backend Build
+        working-directory: apps/backend
+        run: |
+          docker build -t test-backend:latest .
+
+  terraform-main-plan:
+    name: Terraform Plan — Main Environment
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform/environments/main
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: ci-tf-main-session
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        run: |
+          terraform plan \
+            -var-file="terraform.tfvars" \
+            -no-color
+

@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.namespace.name }}-config
+  namespace: {{ .Values.namespace.name }}
+  labels:
+    app: {{ .Values.namespace.name }}
+data:
+  AWS_REGION: {{ .Values.global.awsRegion }}
+  DB_SECRET_NAME: {{ .Values.backend.env.dbSecretName }}
+  SQL_ECHO: {{ .Values.backend.env.sqlEcho | quote }}
+  ALLOWED_ORIGINS: {{ .Values.backend.env.allowedOrigins | quote }}
+  APP_VERSION: {{ .Values.backend.env.appVersion | quote }}

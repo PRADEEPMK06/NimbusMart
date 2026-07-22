@@ -1,0 +1,29 @@
+apiVersion: v2
+name: ecommerce
+description: A Helm chart for the NimbusMart deployment platform
+
+type: application
+
+version: 0.1.0
+appVersion: "1.0.0"
+
+keywords:
+  - ecommerce
+  - deployment
+  - kubernetes
+  - aws
+  - eks
+
+maintainers:
+  - name: NimbusMart Team
+    email: team@nimbusmart.com
+
+dependencies:
+  - name: postgresql
+    version: "12.x.x"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: postgresql.enabled
+  - name: redis
+    version: "17.x.x"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: redis.enabled

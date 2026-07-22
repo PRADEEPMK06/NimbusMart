@@ -1,0 +1,115 @@
+# Default values for ecommerce chart
+# This is a YAML-formatted file
+
+# Namespace configuration
+namespace:
+  name: ecommerce
+
+# Service Account
+serviceAccount:
+  name: backend-sa
+  iamRoleArn: ""
+
+# Frontend configuration
+frontend:
+  name: frontend
+  replicaCount: 2
+  image:
+    repository: ""
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 80
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+  livenessProbe:
+    path: /
+    initialDelaySeconds: 30
+    periodSeconds: 10
+  readinessProbe:
+    path: /
+    initialDelaySeconds: 10
+    periodSeconds: 5
+  autoscaling:
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+
+# Backend configuration
+backend:
+  name: backend
+  replicaCount: 2
+  image:
+    repository: ""
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8000
+  env:
+    dbSecretName: ecommerce-db-credentials
+    sqlEcho: "false"
+    allowedOrigins: "*"
+    appVersion: "1.0.0"
+    dbUsername: postgres
+    dbPassword: ""
+    dbHost: ""
+    dbPort: "5432"
+    dbName: ecommerce
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 512Mi
+  livenessProbe:
+    path: /health
+    initialDelaySeconds: 30
+    periodSeconds: 10
+  readinessProbe:
+    path: /health
+    initialDelaySeconds: 10
+    periodSeconds: 5
+  startupProbe:
+    path: /health
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    failureThreshold: 30
+  autoscaling:
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+
+# Ingress configuration
+ingress:
+  host: ""
+  scheme: internet-facing
+  targetType: ip
+  sslRedirect: "true"
+  certificateArn: ""
+  subnets: ""
+  securityGroups: ""
+  tags: {}
+
+# Global configuration
+global:
+  awsRegion: us-east-1
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  minAvailable: 1
+
+# PostgreSQL (optional - using RDS instead)
+postgresql:
+  enabled: false
+
+# Redis (optional)
+redis:
+  enabled: false
